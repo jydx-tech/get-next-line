@@ -1,22 +1,30 @@
 /*header*/
 
 #include "get_next_line.h"
+#include <stdio.h>
 
 char *ft_read(int fd, char *save)
 {
     char *is_reading;
-    int nb_octet;
+    int nb_bytes;
+
+    nb_bytes = 1;
     is_reading = malloc(sizeof(char) * (BUFFER_SIZE + 1));
         if (!is_reading)
             return (NULL);
-    nb_octet = read(fd, is_reading, BUFFER_SIZE);
-        if (nb_octet < 0)
+    while ((!save || !ft_strchr(save, '\n')) && nb_bytes != 0)
+    {
+        nb_bytes = read(fd, is_reading, BUFFER_SIZE);
+        if (nb_bytes <= 0)
         {
             free (is_reading);
             free (save);
             return (NULL);
         }
-    save = ft_strjoin(is_reading, save);
+        is_reading[nb_bytes] = '\0';
+        save = ft_strjoin(save, is_reading);
+    }
+    free (is_reading);
     return (save);
 }
 
@@ -26,18 +34,19 @@ char *ft_line(char *save)
     int i;
 
     i = 0;
-    while (save[i] && !save[i] = '\n')
+    while (save[i] && save[i] != '\n')
         i++;
     line = malloc(sizeof(char) * (i + 2));
     if (!line)
         return (NULL);
     i = 0;
-    while (save[i] && !save[i] = '\n')
+    while (save[i] && save[i] != '\n')
     { 
         line[i] = save[i];
         i++;
     }
-    line[i] = '\n';
+    if (save[i] == '\n')
+        line[i] = '\n';
     line[i + 1] = '\0';
     return (line); 
 }
@@ -50,7 +59,7 @@ char *ft_save(char *save)
 
     i = 0;
     j = 0;
-    while (save[i] && !save[i] = '\n')
+    while (save[i] && save[i] != '\n')
         i++;
     if (!save[i])
     {
@@ -85,3 +94,32 @@ char *get_next_line(int fd)
     save = ft_save(save);
     return (line);
 }
+/*
+#include <fcntl.h>
+#include <stdio.h>
+
+int main(void)
+{
+    int     fd;
+    char    *line;
+
+    fd = open("test.txt", O_RDONLY);
+    if (fd < 0)
+    {
+        printf("erreur ouverture fichier\n");
+        return (1);
+    }
+    while ((line = get_next_line(fd)) != NULL)
+    {
+        printf("%s", line);
+        free(line);
+    }
+    close(fd);
+    return (0);
+}*/
+
+/*ft_read()    → lit le fichier par chunks et accumule dans save
+ft_line()    → extrait la ligne jusqu'au \n
+ft_save()    → garde le reste après le \n pour le prochain appel
+get_next_line() → orchestre tout avec la variable statique
+*/
